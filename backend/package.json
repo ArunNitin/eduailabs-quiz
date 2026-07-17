@@ -1,0 +1,12 @@
+{
+  "name": "eduailabs-quiz-server",
+  "version": "1.0.0",
+  "description": "EduAILabs Real-time Quiz Backend",
+  "main": "server-with-static.js",
+  "scripts": {
+    "start": "node server-with-static.js"
+  },
+  "dependencies": {
+    "ws": "^8.16.0"
+  }
+}

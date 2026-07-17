@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EduAILabs Quiz — Leaderboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #060610;
+    --surface: #0d0d1f;
+    --border: #1a1a30;
+    --accent: #7c3aed;
+    --accent2: #06b6d4;
+    --gold: #f59e0b;
+    --silver: #9ca3af;
+    --bronze: #cd7c2f;
+    --green: #10b981;
+    --red: #ef4444;
+    --text: #f0f0ff;
+    --muted: #4a4a68;
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+  
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    height: 100vh;
+    overflow: hidden;
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+  }
+
+  /* ── ANIMATED BG ── */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: 
+      radial-gradient(ellipse 60% 50% at 20% 50%, rgba(124,58,237,0.08) 0%, transparent 60%),
+      radial-gradient(ellipse 50% 60% at 80% 50%, rgba(6,182,212,0.06) 0%, transparent 60%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ── HEADER ── */
+  header {
+    position: relative;
+    z-index: 10;
+    padding: 16px 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+    background: rgba(6,6,16,0.8);
+    backdrop-filter: blur(10px);
+  }
+  .school-banner {
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--text);
+    letter-spacing: 0.5px;
+  }
+  .school-sub {
+    font-size: 13px;
+    color: var(--muted);
+    font-family: 'Space Mono', monospace;
+    margin-top: 2px;
+  }
+  .header-center {
+    text-align: center;
+    flex: 1;
+  }
+  .header-logo {
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-family: 'Space Mono', monospace;
+  }
+  .header-quiz-title {
+    font-size: 28px;
+    font-weight: 900;
+    background: linear-gradient(135deg, #fff 0%, var(--accent2) 60%, var(--accent) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    letter-spacing: 1px;
+  }
+  .header-right {
+    text-align: right;
+  }
+  .participant-count {
+    font-size: 36px;
+    font-weight: 900;
+    font-family: 'Space Mono', monospace;
+    color: var(--accent);
+    line-height: 1;
+  }
+  .participant-label {
+    font-size: 12px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  /* ── MAIN CONTENT ── */
+  .main {
+    position: relative;
+    z-index: 10;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    padding: 20px 40px;
+    overflow: hidden;
+  }
+
+  /* ── LEADERBOARD ── */
+  .lb-section { display: flex; flex-direction: column; gap: 8px; overflow: hidden; }
+  .section-title {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .section-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  .lb-list { display: flex; flex-direction: column; gap: 6px; overflow-y: hidden; }
+
+  .lb-row {
+    display: grid;
+    grid-template-columns: 50px 1fr 120px 100px;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    border-radius: 12px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    animation: slideIn 0.4s ease forwards;
+  }
+
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateX(-20px); }
+    to { opacity: 1; transform: none; }
+  }
+
+  .lb-row.rank-1 { border-color: var(--gold); background: rgba(245,158,11,0.06); }
+  .lb-row.rank-2 { border-color: var(--silver); background: rgba(156,163,175,0.04); }
+  .lb-row.rank-3 { border-color: var(--bronze); background: rgba(205,124,47,0.05); }
+
+  .lb-rank-cell {
+    font-size: 22px;
+    text-align: center;
+  }
+  .lb-rank-num {
+    font-size: 16px;
+    font-weight: 800;
+    font-family: 'Space Mono', monospace;
+    color: var(--muted);
+    text-align: center;
+  }
+  .lb-name {
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+  }
+  .lb-name.rank-1 { color: var(--gold); }
+  .lb-name.rank-2 { color: var(--silver); }
+  .lb-name.rank-3 { color: var(--bronze); }
+  .lb-school {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 1px;
+    font-family: 'Space Mono', monospace;
+  }
+  .lb-time {
+    font-size: 12px;
+    color: var(--accent2);
+    font-family: 'Space Mono', monospace;
+    text-align: right;
+  }
+  .lb-score {
+    font-size: 22px;
+    font-weight: 900;
+    font-family: 'Space Mono', monospace;
+    color: var(--gold);
+    text-align: right;
+  }
+  .lb-row.rank-2 .lb-score { color: var(--silver); }
+  .lb-row.rank-3 .lb-score { color: var(--bronze); }
+
+  /* ── RIGHT SIDE ── */
+  .right-side { display: flex; flex-direction: column; gap: 16px; }
+
+  /* ── QUESTION DISPLAY ── */
+  .q-display-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 20px;
+  }
+  .q-status-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+  }
+  .q-num-badge {
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    padding: 4px 14px;
+    border-radius: 100px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    color: #fff;
+  }
+  .q-text-display {
+    font-size: 18px;
+    font-weight: 700;
+    line-height: 1.5;
+    margin-bottom: 14px;
+  }
+  .options-2col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .opt-pill {
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 1.5px solid var(--border);
+    font-size: 13px;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    transition: all 0.4s ease;
+  }
+  .opt-pill.correct {
+    border-color: var(--green);
+    background: rgba(16,185,129,0.12);
+    color: var(--green);
+    font-weight: 700;
+  }
+  .opt-letter-sm {
+    width: 20px; height: 20px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.06);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+
+  /* ── TIMER ── */
+  .timer-section {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    padding: 10px 20px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+  }
+  .timer-display {
+    font-size: 64px;
+    font-weight: 900;
+    font-family: 'Space Mono', monospace;
+    background: linear-gradient(135deg, var(--accent2), var(--accent));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    line-height: 1;
+    transition: all 0.3s;
+    min-width: 80px;
+    text-align: center;
+  }
+  .timer-display.danger {
+    background: linear-gradient(135deg, #ef4444, #f97316);
+    -webkit-background-clip: text;
+    background-clip: text;
+    animation: timerPulse 0.4s ease infinite;
+  }
+  @keyframes timerPulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.7;transform:scale(1.05)} }
+
+  .timer-ring-wrap { position: relative; width: 80px; height: 80px; }
+  .timer-ring-wrap svg { transform: rotate(-90deg); }
+  .tr-bg { fill:none; stroke:var(--border); stroke-width:6; }
+  .tr-fill { fill:none; stroke:var(--accent2); stroke-width:6; stroke-linecap:round; stroke-dasharray:220; transition:stroke-dashoffset 0.9s linear, stroke 0.5s; }
+  .tr-fill.danger { stroke:var(--red); }
+
+  .answered-pill {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+  }
+  .answered-num { font-size: 28px; font-weight: 800; font-family: 'Space Mono', monospace; color: var(--accent); }
+  .answered-lbl { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+
+  /* ── BAR CHART (response time) ── */
+  .chart-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 16px;
+    flex: 1;
+  }
+  .chart-inner {
+    display: flex;
+    gap: 6px;
+    align-items: flex-end;
+    height: 100px;
+    padding-top: 10px;
+  }
+  .chart-bar-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    flex: 1;
+  }
+  .chart-val { font-size: 10px; font-family: 'Space Mono', monospace; color: var(--muted); }
+  .chart-bar {
+    width: 100%;
+    border-radius: 4px 4px 0 0;
+    transition: height 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+    min-height: 4px;
+  }
+  .chart-name {
+    font-size: 9px;
+    color: var(--muted);
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+    font-family: 'Space Mono', monospace;
+  }
+
+  /* ── STATUS BAR ── */
+  footer {
+    position: relative;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 40px;
+    border-top: 1px solid var(--border);
+    background: rgba(6,6,16,0.8);
+    backdrop-filter: blur(10px);
+  }
+  .footer-phase {
+    font-size: 13px;
+    font-family: 'Space Mono', monospace;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .status-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--green);
+    animation: statusPulse 2s ease infinite;
+  }
+  @keyframes statusPulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.5;transform:scale(0.8)} }
+  .footer-url {
+    font-family: 'Space Mono', monospace;
+    font-size: 13px;
+    color: var(--accent2);
+    letter-spacing: 0.5px;
+  }
+
+  /* ── LOBBY STATE ── */
+  .lobby-display {
+    grid-column: 1 / -1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+  }
+  .lobby-count-big {
+    font-size: 120px;
+    font-weight: 900;
+    font-family: 'Space Mono', monospace;
+    background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    line-height: 1;
+    animation: countPulse 2s ease infinite;
+  }
+  @keyframes countPulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.02)} }
+  .lobby-label {
+    font-size: 20px;
+    color: var(--muted);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    font-family: 'Space Mono', monospace;
+  }
+  .scan-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px 40px;
+    text-align: center;
+  }
+  .scan-label {
+    font-size: 14px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 10px;
+    font-family: 'Space Mono', monospace;
+  }
+  .scan-url {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--accent2);
+    letter-spacing: 1px;
+  }
+  .participant-scroll {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+    max-width: 900px;
+  }
+  .p-chip {
+    padding: 6px 14px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 100px;
+    font-size: 13px;
+    font-weight: 600;
+    animation: chipIn 0.3s ease;
+  }
+  @keyframes chipIn { from { opacity:0; transform:scale(0.8); } to { opacity:1; transform:none; } }
+
+  /* ── WINNER SCREEN ── */
+  .winner-display {
+    grid-column: 1 / -1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    animation: winnerIn 0.6s cubic-bezier(0.34,1.56,0.64,1) forwards;
+  }
+  @keyframes winnerIn { from { opacity:0; transform:scale(0.8); } to { opacity:1; transform:none; } }
+  .winner-trophy { font-size: 80px; animation: trophyBounce 1s ease infinite; }
+  @keyframes trophyBounce { 0%,100%{transform:translateY(0) rotate(-5deg)} 50%{transform:translateY(-12px) rotate(5deg)} }
+  .winner-name {
+    font-size: 56px;
+    font-weight: 900;
+    background: linear-gradient(135deg, var(--gold), #fbbf24, var(--gold));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-align: center;
+  }
+  .winner-score { font-size: 28px; color: var(--muted); font-family: 'Space Mono', monospace; }
+</style>
+</head>
+<body>
+
+<!-- ══ HEADER ══ -->
+<header>
+  <div>
+    <div class="school-banner" id="school-name">EduAILabs Quiz</div>
+    <div class="school-sub">eduailabs.com</div>
+  </div>
+  <div class="header-center">
+    <div class="header-logo">EduAILabs.com</div>
+    <div class="header-quiz-title" id="quiz-title">AI Workshop Quiz</div>
+  </div>
+  <div class="header-right">
+    <div class="participant-count" id="participant-count">0</div>
+    <div class="participant-label">Participants</div>
+  </div>
+</header>
+
+<!-- ══ MAIN ══ -->
+<div class="main" id="main-content">
+
+  <!-- LOBBY STATE (default) -->
+  <div class="lobby-display" id="lobby-view">
+    <div class="lobby-count-big" id="lobby-big-count">0</div>
+    <div class="lobby-label">Participants Ready</div>
+    <div class="scan-box">
+      <div class="scan-label">📱 Scan QR or Visit</div>
+      <div class="scan-url" id="scan-url">loading...</div>
+    </div>
+    <div class="participant-scroll" id="participant-chips"></div>
+  </div>
+
+</div>
+
+<!-- ══ FOOTER ══ -->
+<footer>
+  <div class="footer-phase">
+    <div class="status-dot" id="status-dot"></div>
+    <span id="footer-phase">Waiting for Quiz Master...</span>
+  </div>
+  <div class="footer-url">eduailabs.com</div>
+</footer>
+
+<script>
+const WS_URL = 'ws://' + (location.hostname || 'localhost') + ':8080';
+let ws = null;
+let currentPhase = 'LOBBY';
+let participants = [];
+let leaderboard = [];
+let quizConfig = { totalQuestions: 10, secondsPerQuestion: 10, schoolName: 'EduAILabs', quizTitle: 'AI Workshop Quiz' };
+let timerInterval = null;
+
+// ─── CONNECTION ────────────────────────────────────────────────────────────
+function connect() {
+  try { ws = new WebSocket(WS_URL); } catch(e) { setTimeout(connect, 3000); return; }
+  ws.onopen = () => { send({ type: 'LEADERBOARD_CONNECT' }); };
+  ws.onclose = () => setTimeout(connect, 3000);
+  ws.onerror = () => {};
+  ws.onmessage = (e) => { try { handleMsg(JSON.parse(e.data)); } catch(err) {} };
+}
+
+function send(d) { if (ws && ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify(d)); }
+
+// ─── MESSAGE HANDLER ──────────────────────────────────────────────────────
+function handleMsg(msg) {
+  switch(msg.type) {
+    
+    case 'LEADERBOARD_CONNECTED':
+      participants = msg.participants || [];
+      quizConfig = msg.quizConfig || quizConfig;
+      updateHeader();
+      updateLobbyView();
+      break;
+
+    case 'PARTICIPANT_JOINED':
+      participants = msg.participants || [];
+      updateParticipantCount(msg.count);
+      updateParticipantChips();
+      document.getElementById('lobby-big-count').textContent = msg.count;
+      break;
+
+    case 'CONFIG_UPDATED':
+      quizConfig = msg.quizConfig;
+      updateHeader();
+      break;
+
+    case 'QUESTION_START':
+      showQuestionView(msg);
+      break;
+
+    case 'TIMER_TICK':
+      updateTimer(msg.remaining, msg.total);
+      break;
+
+    case 'ANSWER_COUNT_UPDATE':
+      updateAnsweredCount(msg.answered, msg.total);
+      break;
+
+    case 'ANSWER_REVEAL':
+      showReveal(msg);
+      break;
+
+    case 'QUIZ_FINISHED':
+      showWinner(msg.leaderboard);
+      break;
+
+    case 'QUIZ_RESET':
+      location.reload();
+      break;
+  }
+}
+
+// ─── VIEWS ────────────────────────────────────────────────────────────────
+function updateHeader() {
+  document.getElementById('school-name').textContent = quizConfig.schoolName || 'EduAILabs';
+  document.getElementById('quiz-title').textContent = quizConfig.quizTitle || 'AI Workshop Quiz';
+}
+
+function updateParticipantCount(n) {
+  document.getElementById('participant-count').textContent = n;
+}
+
+function updateParticipantChips() {
+  document.getElementById('participant-chips').innerHTML = participants.map(p =>
+    `<div class="p-chip">${escHtml(p.name)}</div>`
+  ).join('');
+}
+
+function updateLobbyView() {
+  const n = participants.length;
+  document.getElementById('lobby-big-count').textContent = n;
+  document.getElementById('participant-count').textContent = n;
+  document.getElementById('scan-url').textContent = location.protocol + '//' + location.hostname + ':8080/participant/';
+  updateParticipantChips();
+}
+
+function showQuestionView(msg) {
+  currentPhase = 'QUESTION';
+  document.getElementById('footer-phase').textContent = `Question ${msg.questionIndex + 1} of ${msg.total} — LIVE`;
+  
+  const q = msg.question;
+  const labels = ['A','B','C','D'];
+  
+  document.getElementById('main-content').innerHTML = `
+    <div class="lb-section">
+      <div class="section-title">🏆 Leaderboard</div>
+      <div class="lb-list" id="lb-list">
+        ${renderLBHtml(leaderboard)}
+      </div>
+    </div>
+    <div class="right-side">
+      <div class="timer-section">
+        <div class="timer-ring-wrap">
+          <svg viewBox="0 0 80 80" width="80" height="80">
+            <circle class="tr-bg" cx="40" cy="40" r="35"/>
+            <circle class="tr-fill" id="timer-ring" cx="40" cy="40" r="35"/>
+          </svg>
+        </div>
+        <div class="timer-display" id="timer-num">${msg.duration}</div>
+        <div class="answered-pill">
+          <div class="answered-num" id="ans-count">0</div>
+          <div class="answered-lbl">Answered</div>
+          <div style="font-size:10px; color:var(--muted); font-family:'Space Mono',monospace;" id="ans-total">/ ${participants.length}</div>
+        </div>
+      </div>
+      <div class="q-display-card">
+        <div class="q-status-row">
+          <div class="q-num-badge">QUESTION ${msg.questionIndex + 1} / ${msg.total}</div>
+        </div>
+        <div class="q-text-display">${escHtml(q.question)}</div>
+        <div class="options-2col" id="options-area">
+          ${q.options.map((opt, i) => `
+            <div class="opt-pill" id="opt-${i}">
+              <span class="opt-letter-sm">${labels[i]}</span>
+              ${escHtml(opt)}
+            </div>
+          `).join('')}
+        </div>
+      </div>
+      <div class="chart-card">
+        <div class="section-title" style="margin-bottom:8px;">⏱ Response Time Distribution</div>
+        <div class="chart-inner" id="time-chart">
+          <div style="color:var(--muted);font-size:13px;padding:20px;width:100%;text-align:center;">Waiting for answers...</div>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  updateTimer(msg.duration, msg.duration);
+}
+
+function updateTimer(remaining, total) {
+  const ringEl = document.getElementById('timer-ring');
+  const numEl = document.getElementById('timer-num');
+  if (!ringEl || !numEl) return;
+  
+  const circumference = 220;
+  const offset = circumference * (1 - remaining / total);
+  ringEl.style.strokeDashoffset = offset;
+  numEl.textContent = remaining;
+  
+  const danger = remaining <= 3 && remaining > 0;
+  ringEl.classList.toggle('danger', danger);
+  numEl.classList.toggle('danger', danger);
+}
+
+function updateAnsweredCount(answered, total) {
+  const el = document.getElementById('ans-count');
+  const el2 = document.getElementById('ans-total');
+  if (el) el.textContent = answered;
+  if (el2) el2.textContent = '/ ' + total;
+}
+
+function showReveal(msg) {
+  currentPhase = 'REVEAL';
+  document.getElementById('footer-phase').textContent = '✓ Answer Revealed — Leaderboard Updated';
+  leaderboard = msg.leaderboard;
+
+  // Update leaderboard
+  const lbEl = document.getElementById('lb-list');
+  if (lbEl) lbEl.innerHTML = renderLBHtml(leaderboard);
+
+  // Reveal correct option
+  const correct = msg.correctOption;
+  for (let i = 0; i < 4; i++) {
+    const opt = document.getElementById('opt-' + i);
+    if (opt && i === correct) opt.classList.add('correct');
+  }
+
+  // Timer shows checkmark
+  const timerEl = document.getElementById('timer-num');
+  if (timerEl) { timerEl.textContent = '✓'; timerEl.className = 'timer-display'; }
+
+  // Show response time chart
+  renderTimeChart(msg.timings);
+}
+
+function renderTimeChart(timings) {
+  const chartEl = document.getElementById('time-chart');
+  if (!chartEl || !timings) return;
+  
+  const entries = Object.values(timings).filter(t => t.timeTaken < 99999).sort((a,b) => a.timeTaken - b.timeTaken).slice(0, 20);
+  if (!entries.length) return;
+  
+  const maxTime = Math.max(...entries.map(e => e.timeTaken));
+  const colors = { correct: '#10b981', wrong: '#ef4444' };
+  
+  chartEl.innerHTML = entries.map(entry => {
+    const pct = Math.round((entry.timeTaken / maxTime) * 95) + 4;
+    const color = entry.correct ? colors.correct : colors.wrong;
+    const timeStr = entry.timeTaken < 1000 ? entry.timeTaken + 'ms' : (entry.timeTaken/1000).toFixed(1) + 's';
+    return `
+      <div class="chart-bar-wrap">
+        <div class="chart-val">${timeStr}</div>
+        <div class="chart-bar" style="height:${pct}%; background:${color}; opacity:0.8;"></div>
+        <div class="chart-name">${escHtml(entry.name.split(' ')[0])}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+function showWinner(lb) {
+  leaderboard = lb;
+  currentPhase = 'FINISHED';
+  document.getElementById('footer-phase').textContent = '🏆 Quiz Complete! Final Results';
+  
+  const winner = lb[0];
+  const top3 = lb.slice(0, 3);
+  
+  document.getElementById('main-content').innerHTML = `
+    <div class="winner-display">
+      <div class="winner-trophy">🏆</div>
+      <div style="font-size:18px; color:var(--muted); letter-spacing:3px; text-transform:uppercase; font-family:'Space Mono',monospace;">Champion</div>
+      <div class="winner-name">${escHtml(winner?.name || 'Unknown')}</div>
+      <div class="winner-score">${winner?.score || 0} Points · Rank #1</div>
+      <div style="display:flex;gap:16px;margin-top:20px;">
+        ${top3.map((p, i) => {
+          const medals = ['🥇','🥈','🥉'];
+          const colors = ['var(--gold)','var(--silver)','var(--bronze)'];
+          return `
+            <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px 24px;text-align:center;">
+              <div style="font-size:32px;">${medals[i]}</div>
+              <div style="font-size:16px;font-weight:700;color:${colors[i]};margin:4px 0;">${escHtml(p.name)}</div>
+              <div style="font-size:22px;font-weight:800;font-family:'Space Mono',monospace;color:${colors[i]};">${p.score}</div>
+              <div style="font-size:11px;color:var(--muted);margin-top:2px;">pts</div>
+            </div>
+          `;
+        }).join('')}
+      </div>
+    </div>
+  `;
+}
+
+function renderLBHtml(lb) {
+  if (!lb || !lb.length) {
+    return '<div style="color:var(--muted);font-size:13px;padding:16px;text-align:center;">First question reveals leaderboard</div>';
+  }
+  const medals = ['🥇','🥈','🥉'];
+  return lb.slice(0, 8).map((p, i) => {
+    const rankClass = i < 3 ? `rank-${i+1}` : '';
+    const avgMs = Math.round(p.avgTimeTaken);
+    const avgStr = avgMs < 1000 ? avgMs + 'ms' : (avgMs/1000).toFixed(1) + 's';
+    return `
+      <div class="lb-row ${rankClass}" style="animation-delay:${i*0.06}s">
+        <div>${i < 3 ? `<div class="lb-rank-cell">${medals[i]}</div>` : `<div class="lb-rank-num">${i+1}</div>`}</div>
+        <div>
+          <div class="lb-name ${rankClass}">${escHtml(p.name)}</div>
+          <div class="lb-school">${escHtml(p.school || '')}</div>
+        </div>
+        <div class="lb-time">${avgStr} avg</div>
+        <div class="lb-score">${p.score}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+function escHtml(str) {
+  return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ─── INIT ─────────────────────────────────────────────────────────────────
+connect();
+document.getElementById('scan-url').textContent = location.protocol + '//' + location.hostname + ':8080/participant/';
+</script>
+</body>
+</html>

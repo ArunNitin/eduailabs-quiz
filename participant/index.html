@@ -1,0 +1,872 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0a0a1a">
+<title>EduAILabs Quiz</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #08080f;
+    --surface: #111120;
+    --border: #1e1e35;
+    --accent: #7c3aed;
+    --accent2: #06b6d4;
+    --gold: #f59e0b;
+    --green: #10b981;
+    --red: #ef4444;
+    --text: #f0f0ff;
+    --muted: #6b6b8a;
+    --radius: 16px;
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  
+  html, body {
+    height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    overflow: hidden;
+  }
+
+  #app {
+    height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+
+  /* ── SCREEN SYSTEM ── */
+  .screen {
+    display: none;
+    flex-direction: column;
+    min-height: 100dvh;
+    padding: 20px 16px;
+    animation: fadeIn 0.4s ease;
+  }
+  .screen.active { display: flex; }
+
+  @keyframes fadeIn { from { opacity:0; transform: translateY(12px); } to { opacity:1; transform:none; } }
+  @keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @keyframes slideUp { from { opacity:0; transform: translateY(30px); } to { opacity:1; transform:none; } }
+  @keyframes correctBounce { 0%,100%{transform:scale(1)} 30%{transform:scale(1.15)} 60%{transform:scale(0.95)} }
+  @keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-8px)} 75%{transform:translateX(8px)} }
+  @keyframes timerPulse { 0%,100%{opacity:1} 50%{opacity:0.6} }
+  @keyframes glow { 0%,100%{box-shadow:0 0 20px rgba(124,58,237,0.4)} 50%{box-shadow:0 0 40px rgba(124,58,237,0.8)} }
+
+  /* ── LOGO ── */
+  .logo-area {
+    text-align: center;
+    padding: 20px 0 10px;
+  }
+  .logo-badge {
+    display: inline-block;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    padding: 6px 18px;
+    border-radius: 100px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: #fff;
+    margin-bottom: 8px;
+  }
+  .logo-title {
+    font-size: 28px;
+    font-weight: 800;
+    background: linear-gradient(135deg, #fff 0%, var(--accent2) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+  .logo-sub {
+    font-size: 13px;
+    color: var(--muted);
+    font-family: 'Space Mono', monospace;
+  }
+
+  /* ── FORM ── */
+  .form-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin: 12px 0;
+    flex: 1;
+  }
+  .form-title {
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .field {
+    margin-bottom: 14px;
+  }
+  .field label {
+    display: block;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+  .field input, .field select {
+    width: 100%;
+    background: #0d0d1e;
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 14px;
+    font-size: 15px;
+    font-family: 'Syne', sans-serif;
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.2s;
+    appearance: none;
+  }
+  .field input:focus, .field select:focus { border-color: var(--accent); }
+  .field input::placeholder { color: var(--muted); }
+
+  /* ── BUTTONS ── */
+  .btn-primary {
+    width: 100%;
+    padding: 16px;
+    background: linear-gradient(135deg, var(--accent), #5b21b6);
+    border: none;
+    border-radius: 12px;
+    color: #fff;
+    font-size: 16px;
+    font-weight: 700;
+    font-family: 'Syne', sans-serif;
+    cursor: pointer;
+    letter-spacing: 1px;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+  .btn-primary:active { transform: scale(0.97); }
+  .btn-primary:disabled { opacity: 0.5; }
+
+  /* ── LOBBY SCREEN ── */
+  .waiting-ring {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    border: 4px solid var(--border);
+    border-top-color: var(--accent);
+    animation: spin 1.5s linear infinite;
+    margin: 20px auto;
+  }
+  .waiting-text {
+    text-align: center;
+    font-size: 14px;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+  .participant-name-display {
+    text-align: center;
+    font-size: 24px;
+    font-weight: 800;
+    color: var(--accent2);
+    padding: 16px;
+    background: rgba(6,182,212,0.08);
+    border-radius: 12px;
+    border: 1px solid rgba(6,182,212,0.2);
+    margin: 12px 0;
+  }
+
+  /* ── QUESTION SCREEN ── */
+  .q-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+  }
+  .q-progress {
+    font-size: 12px;
+    color: var(--muted);
+    font-family: 'Space Mono', monospace;
+  }
+  .timer-ring-container {
+    position: relative;
+    width: 52px;
+    height: 52px;
+  }
+  .timer-ring-container svg {
+    transform: rotate(-90deg);
+    width: 52px;
+    height: 52px;
+  }
+  .timer-ring-bg { fill: none; stroke: var(--border); stroke-width: 4; }
+  .timer-ring-fill {
+    fill: none;
+    stroke: var(--accent2);
+    stroke-width: 4;
+    stroke-linecap: round;
+    stroke-dasharray: 138;
+    stroke-dashoffset: 0;
+    transition: stroke-dashoffset 0.9s linear, stroke 0.5s;
+  }
+  .timer-ring-fill.danger { stroke: var(--red); }
+  .timer-number {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    font-family: 'Space Mono', monospace;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--accent2);
+  }
+  .timer-number.danger { color: var(--red); animation: timerPulse 0.5s ease infinite; }
+
+  .q-text {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 18px;
+    font-size: 17px;
+    font-weight: 600;
+    line-height: 1.5;
+    margin-bottom: 14px;
+    min-height: 90px;
+    display: flex;
+    align-items: center;
+  }
+
+  .options-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+  .option-btn {
+    background: var(--surface);
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 10px;
+    color: var(--text);
+    font-size: 13px;
+    font-weight: 600;
+    font-family: 'Syne', sans-serif;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.15s;
+    line-height: 1.3;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-height: 60px;
+  }
+  .option-btn:active { transform: scale(0.95); }
+  .option-btn.selected {
+    border-color: var(--accent);
+    background: rgba(124,58,237,0.15);
+    animation: glow 1s ease infinite;
+  }
+  .option-btn:disabled { cursor: default; }
+  .option-btn.correct {
+    border-color: var(--green);
+    background: rgba(16,185,129,0.2);
+    animation: correctBounce 0.4s ease;
+  }
+  .option-btn.wrong {
+    border-color: var(--red);
+    background: rgba(239,68,68,0.15);
+    animation: shake 0.4s ease;
+  }
+  .option-label {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.08);
+    font-size: 11px;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+
+  /* ── ANSWER SUBMITTED STATE ── */
+  .answered-state {
+    text-align: center;
+    padding: 20px;
+    display: none;
+  }
+  .answered-state.visible { display: block; }
+  .answered-icon {
+    font-size: 48px;
+    margin-bottom: 8px;
+    animation: pulse 1s ease infinite;
+  }
+  .answered-text {
+    font-size: 16px;
+    color: var(--muted);
+    font-family: 'Space Mono', monospace;
+  }
+  .time-badge {
+    display: inline-block;
+    background: rgba(6,182,212,0.15);
+    border: 1px solid var(--accent2);
+    border-radius: 8px;
+    padding: 4px 12px;
+    font-family: 'Space Mono', monospace;
+    font-size: 13px;
+    color: var(--accent2);
+    margin-top: 8px;
+  }
+
+  /* ── RESULT BANNER ── */
+  .result-banner {
+    border-radius: 12px;
+    padding: 16px;
+    margin-top: 12px;
+    text-align: center;
+    font-weight: 700;
+    font-size: 15px;
+    display: none;
+  }
+  .result-banner.visible { display: block; animation: slideUp 0.4s ease; }
+  .result-banner.correct-banner { background: rgba(16,185,129,0.15); border: 1px solid var(--green); color: var(--green); }
+  .result-banner.wrong-banner { background: rgba(239,68,68,0.1); border: 1px solid var(--red); color: var(--red); }
+  .result-explanation { font-size: 12px; color: var(--muted); margin-top: 6px; font-weight: 400; line-height: 1.4; }
+
+  /* ── FINISHED SCREEN ── */
+  .trophy-display {
+    text-align: center;
+    padding: 20px 0;
+  }
+  .trophy-icon { font-size: 72px; margin-bottom: 12px; }
+  .final-score {
+    font-size: 56px;
+    font-weight: 800;
+    background: linear-gradient(135deg, var(--gold), #fbbf24);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .final-rank {
+    font-size: 18px;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+  .stat-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin: 16px 0;
+  }
+  .stat-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px;
+    text-align: center;
+  }
+  .stat-value { font-size: 22px; font-weight: 800; color: var(--accent2); }
+  .stat-label { font-size: 11px; color: var(--muted); margin-top: 4px; text-transform: uppercase; letter-spacing: 1px; }
+
+  /* ── CONNECTION STATUS ── */
+  .conn-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--red);
+    display: inline-block;
+    margin-right: 6px;
+    transition: background 0.3s;
+  }
+  .conn-dot.connected { background: var(--green); animation: pulse 2s ease infinite; }
+  .conn-status {
+    display: flex;
+    align-items: center;
+    font-size: 11px;
+    color: var(--muted);
+    font-family: 'Space Mono', monospace;
+    padding: 6px 0;
+  }
+
+  .progress-bar {
+    height: 3px;
+    background: var(--border);
+    border-radius: 100px;
+    margin-bottom: 16px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    border-radius: 100px;
+    transition: width 0.3s ease;
+  }
+
+  /* ── ERROR/INFO BOX ── */
+  .info-box {
+    background: rgba(124,58,237,0.1);
+    border: 1px solid rgba(124,58,237,0.3);
+    border-radius: 10px;
+    padding: 12px;
+    font-size: 13px;
+    color: var(--muted);
+    margin-top: 8px;
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ══ REGISTRATION SCREEN ══ -->
+  <div class="screen active" id="screen-register">
+    <div class="logo-area">
+      <div class="logo-badge">EduAILabs.com</div>
+      <div class="logo-title">AI QUIZ</div>
+      <div class="logo-sub">Workshop Challenge</div>
+    </div>
+    
+    <div class="form-card">
+      <div class="form-title">🎓 Register to Play</div>
+      
+      <div class="field">
+        <label>Your Full Name *</label>
+        <input type="text" id="inp-name" placeholder="Enter your name" maxlength="50" autocomplete="name">
+      </div>
+      <div class="field">
+        <label>Mobile Number *</label>
+        <input type="tel" id="inp-mobile" placeholder="10-digit mobile number" maxlength="15" autocomplete="tel">
+      </div>
+      <div class="field">
+        <label>School / Organization *</label>
+        <input type="text" id="inp-school" placeholder="Your institution name" maxlength="60" autocomplete="organization">
+      </div>
+      <div class="field">
+        <label>Subject / Stream</label>
+        <input type="text" id="inp-subject" placeholder="e.g., Computer Science, Biology..." maxlength="40">
+      </div>
+      
+      <div id="reg-error" style="color:#ef4444;font-size:13px;margin-bottom:10px;display:none;"></div>
+      
+      <button class="btn-primary" id="btn-join" onclick="submitRegistration()">
+        🚀 JOIN QUIZ
+      </button>
+    </div>
+    
+    <div class="conn-status">
+      <span class="conn-dot" id="conn-dot-reg"></span>
+      <span id="conn-text-reg">Connecting to server...</span>
+    </div>
+  </div>
+
+  <!-- ══ LOBBY SCREEN ══ -->
+  <div class="screen" id="screen-lobby">
+    <div class="logo-area">
+      <div class="logo-badge">EduAILabs.com</div>
+      <div class="logo-title">AI QUIZ</div>
+    </div>
+    
+    <div class="participant-name-display" id="lobby-name">Welcome!</div>
+    
+    <div style="text-align:center; margin: 8px 0;">
+      <div style="font-size:12px; color:var(--muted); text-transform:uppercase; letter-spacing:1px; margin-bottom:4px;">Participants Joined</div>
+      <div style="font-size:48px; font-weight:800; color:var(--accent);" id="lobby-count">0</div>
+    </div>
+    
+    <div class="waiting-ring"></div>
+    <div class="waiting-text">⏳ Waiting for Quiz Master to start...</div>
+    <div class="waiting-text" id="lobby-school" style="margin-top:4px; font-size:12px;"></div>
+    
+    <div class="info-box">
+      Keep this screen open.<br>Questions will appear automatically when the quiz starts.
+    </div>
+  </div>
+
+  <!-- ══ QUESTION SCREEN ══ -->
+  <div class="screen" id="screen-question">
+    <div class="q-header">
+      <div>
+        <div class="q-progress" id="q-progress">Q1 of 10</div>
+        <div style="font-size:20px; font-weight:800; color:var(--accent2); font-family:'Space Mono',monospace;" id="q-score">0 pts</div>
+      </div>
+      <div class="timer-ring-container">
+        <svg viewBox="0 0 52 52">
+          <circle class="timer-ring-bg" cx="26" cy="26" r="22"/>
+          <circle class="timer-ring-fill" id="timer-ring" cx="26" cy="26" r="22"/>
+        </svg>
+        <div class="timer-number" id="timer-num">10</div>
+      </div>
+    </div>
+
+    <div class="progress-bar">
+      <div class="progress-fill" id="q-progress-bar" style="width:10%"></div>
+    </div>
+
+    <div class="q-text" id="q-text">Loading question...</div>
+
+    <div class="options-grid" id="options-grid">
+      <button class="option-btn" id="opt-0" onclick="selectAnswer(0)">
+        <span class="option-label">A</span>
+        <span id="opt-text-0">...</span>
+      </button>
+      <button class="option-btn" id="opt-1" onclick="selectAnswer(1)">
+        <span class="option-label">B</span>
+        <span id="opt-text-1">...</span>
+      </button>
+      <button class="option-btn" id="opt-2" onclick="selectAnswer(2)">
+        <span class="option-label">C</span>
+        <span id="opt-text-2">...</span>
+      </button>
+      <button class="option-btn" id="opt-3" onclick="selectAnswer(3)">
+        <span class="option-label">D</span>
+        <span id="opt-text-3">...</span>
+      </button>
+    </div>
+
+    <div class="answered-state" id="answered-state">
+      <div class="answered-icon" id="answered-icon">⏱️</div>
+      <div class="answered-text">Answer submitted!</div>
+      <div class="time-badge" id="time-badge">0ms</div>
+    </div>
+
+    <div class="result-banner" id="result-banner"></div>
+  </div>
+
+  <!-- ══ FINISHED SCREEN ══ -->
+  <div class="screen" id="screen-finished">
+    <div class="logo-area">
+      <div class="logo-badge">Final Results</div>
+    </div>
+    
+    <div class="trophy-display">
+      <div class="trophy-icon" id="finish-icon">🏆</div>
+      <div class="final-score" id="final-score">0</div>
+      <div style="font-size:14px; color:var(--muted); font-family:'Space Mono',monospace;">POINTS</div>
+      <div class="final-rank" id="final-rank">Rank: --</div>
+    </div>
+
+    <div class="stat-grid">
+      <div class="stat-box">
+        <div class="stat-value" id="stat-correct">0</div>
+        <div class="stat-label">Correct</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-value" id="stat-avg-time">0ms</div>
+        <div class="stat-label">Avg Speed</div>
+      </div>
+    </div>
+
+    <div class="info-box" style="font-size:14px; color:var(--text);">
+      🎉 Thanks for participating!<br>
+      <span style="color:var(--muted); font-size:12px;">Check the main screen for the full leaderboard</span>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ─── CONFIG ────────────────────────────────────────────────────────────────
+const WS_URL = 'ws://' + (location.hostname || 'localhost') + ':8080';
+let ws = null;
+let participantId = null;
+let reconnectTimer = null;
+let currentQuestion = null;
+let questionStartTime = null;
+let hasAnswered = false;
+let totalDuration = 10;
+let timerInterval = null;
+let myScore = 0;
+let myAnswers = [];
+
+// ─── CONNECTION ────────────────────────────────────────────────────────────
+function connect() {
+  try {
+    ws = new WebSocket(WS_URL);
+  } catch(e) {
+    setConnStatus(false);
+    scheduleReconnect();
+    return;
+  }
+
+  ws.onopen = () => {
+    setConnStatus(true);
+    clearTimeout(reconnectTimer);
+    // Re-join if we have an id
+    if (participantId) {
+      // Reconnect silently
+    }
+  };
+
+  ws.onclose = () => {
+    setConnStatus(false);
+    scheduleReconnect();
+  };
+
+  ws.onerror = () => {
+    setConnStatus(false);
+  };
+
+  ws.onmessage = (e) => {
+    try {
+      handleMessage(JSON.parse(e.data));
+    } catch(err) {}
+  };
+}
+
+function scheduleReconnect() {
+  clearTimeout(reconnectTimer);
+  reconnectTimer = setTimeout(connect, 3000);
+}
+
+function setConnStatus(connected) {
+  document.querySelectorAll('.conn-dot').forEach(d => {
+    d.classList.toggle('connected', connected);
+  });
+  document.querySelectorAll('#conn-text-reg').forEach(t => {
+    t.textContent = connected ? 'Connected ✓' : 'Reconnecting...';
+  });
+}
+
+function send(data) {
+  if (ws && ws.readyState === WebSocket.OPEN) {
+    ws.send(JSON.stringify(data));
+  }
+}
+
+// ─── MESSAGE HANDLER ────────────────────────────────────────────────────────
+function handleMessage(msg) {
+  switch(msg.type) {
+    
+    case 'JOINED':
+      participantId = msg.participantId;
+      showScreen('screen-lobby');
+      const name = document.getElementById('inp-name').value.trim();
+      document.getElementById('lobby-name').textContent = '👋 ' + name;
+      document.getElementById('lobby-school').textContent = document.getElementById('inp-school').value.trim();
+      document.getElementById('lobby-count').textContent = '...';
+      break;
+
+    case 'PARTICIPANT_JOINED':
+      document.getElementById('lobby-count').textContent = msg.count;
+      break;
+
+    case 'QUESTION_START':
+      startQuestion(msg);
+      break;
+
+    case 'TIMER_TICK':
+      updateTimer(msg.remaining, msg.total);
+      break;
+
+    case 'ANSWER_RECEIVED':
+      const ms = msg.timeTaken;
+      document.getElementById('time-badge').textContent = ms < 1000 ? ms + 'ms' : (ms/1000).toFixed(2) + 's';
+      break;
+
+    case 'ANSWER_COUNT_UPDATE':
+      // Could show "X/Y answered" on a small counter
+      break;
+
+    case 'ANSWER_REVEAL':
+      revealAnswer(msg);
+      break;
+
+    case 'QUIZ_FINISHED':
+      showFinished(msg.leaderboard);
+      break;
+
+    case 'QUIZ_RESET':
+      location.reload();
+      break;
+
+    case 'CONFIG_UPDATED':
+      totalDuration = msg.quizConfig.secondsPerQuestion;
+      break;
+  }
+}
+
+// ─── REGISTRATION ──────────────────────────────────────────────────────────
+function submitRegistration() {
+  const name = document.getElementById('inp-name').value.trim();
+  const mobile = document.getElementById('inp-mobile').value.trim();
+  const school = document.getElementById('inp-school').value.trim();
+  const subject = document.getElementById('inp-subject').value.trim();
+
+  const errEl = document.getElementById('reg-error');
+  errEl.style.display = 'none';
+
+  if (!name) { showError('Please enter your name'); return; }
+  if (!mobile || mobile.length < 10) { showError('Please enter a valid mobile number'); return; }
+  if (!school) { showError('Please enter your school/organization'); return; }
+
+  if (!ws || ws.readyState !== WebSocket.OPEN) {
+    showError('Not connected to server. Please wait...');
+    return;
+  }
+
+  document.getElementById('btn-join').disabled = true;
+  send({ type: 'JOIN', name, mobile, school, subject });
+}
+
+function showError(msg) {
+  const errEl = document.getElementById('reg-error');
+  errEl.textContent = msg;
+  errEl.style.display = 'block';
+  document.getElementById('btn-join').disabled = false;
+}
+
+// ─── QUESTION ──────────────────────────────────────────────────────────────
+function startQuestion(msg) {
+  currentQuestion = msg.question;
+  totalDuration = msg.duration;
+  hasAnswered = false;
+  myAnswers.push(null);
+  questionStartTime = Date.now();
+
+  // Reset UI
+  document.getElementById('q-text').textContent = msg.question.question;
+  document.getElementById('q-progress').textContent = `Q${msg.questionIndex + 1} of ${msg.total}`;
+  document.getElementById('q-score').textContent = myScore + ' pts';
+  document.getElementById('q-progress-bar').style.width = ((msg.questionIndex + 1) / msg.total * 100) + '%';
+
+  const labels = ['A','B','C','D'];
+  for (let i = 0; i < 4; i++) {
+    const btn = document.getElementById('opt-' + i);
+    const txt = document.getElementById('opt-text-' + i);
+    btn.className = 'option-btn';
+    btn.disabled = false;
+    txt.textContent = msg.question.options[i] || '';
+    btn.querySelector('.option-label').textContent = labels[i];
+  }
+
+  document.getElementById('answered-state').classList.remove('visible');
+  document.getElementById('result-banner').classList.remove('visible');
+
+  // Reset timer
+  updateTimer(totalDuration, totalDuration);
+
+  showScreen('screen-question');
+}
+
+function selectAnswer(option) {
+  if (hasAnswered) return;
+  if (!currentQuestion) return;
+  
+  hasAnswered = true;
+  const timeTaken = Date.now() - questionStartTime;
+
+  // Visual feedback
+  for (let i = 0; i < 4; i++) {
+    const btn = document.getElementById('opt-' + i);
+    btn.disabled = true;
+    if (i === option) btn.classList.add('selected');
+  }
+
+  document.getElementById('answered-state').classList.add('visible');
+
+  send({ type: 'SUBMIT_ANSWER', option, timeTaken });
+}
+
+function updateTimer(remaining, total) {
+  const pct = remaining / total;
+  const circumference = 138;
+  const offset = circumference * (1 - pct);
+
+  const ring = document.getElementById('timer-ring');
+  const num = document.getElementById('timer-num');
+  
+  ring.style.strokeDashoffset = offset;
+  num.textContent = remaining;
+
+  const danger = remaining <= 3;
+  ring.classList.toggle('danger', danger);
+  num.classList.toggle('danger', danger);
+
+  if (remaining <= 0) {
+    if (!hasAnswered) {
+      hasAnswered = true;
+      for (let i = 0; i < 4; i++) document.getElementById('opt-' + i).disabled = true;
+    }
+    clearInterval(timerInterval);
+  }
+}
+
+function revealAnswer(msg) {
+  const correct = msg.correctOption;
+
+  for (let i = 0; i < 4; i++) {
+    const btn = document.getElementById('opt-' + i);
+    btn.disabled = true;
+    if (i === correct) {
+      btn.classList.remove('selected', 'wrong');
+      btn.classList.add('correct');
+    } else if (btn.classList.contains('selected')) {
+      btn.classList.remove('selected');
+      btn.classList.add('wrong');
+    }
+  }
+
+  // Find my answer
+  const myAnswer = msg.timings[participantId];
+  const isCorrect = myAnswer && myAnswer.option === correct;
+  
+  const banner = document.getElementById('result-banner');
+  banner.classList.add('visible');
+  
+  if (isCorrect) {
+    banner.className = 'result-banner visible correct-banner';
+    banner.innerHTML = '✅ Correct! Well done!<div class="result-explanation">' + (msg.explanation||'') + '</div>';
+    myScore += 100;
+    document.getElementById('q-score').textContent = myScore + ' pts';
+  } else {
+    const correctText = currentQuestion?.options?.[correct] || '';
+    banner.className = 'result-banner visible wrong-banner';
+    banner.innerHTML = '❌ Incorrect. Answer: <strong>' + correctText + '</strong><div class="result-explanation">' + (msg.explanation||'') + '</div>';
+  }
+}
+
+function showFinished(leaderboard) {
+  const me = leaderboard.find(p => p.id === participantId);
+  if (me) {
+    const icons = ['🥇','🥈','🥉','🏅','🎖️'];
+    document.getElementById('finish-icon').textContent = icons[Math.min(me.rank-1, icons.length-1)] || '🏅';
+    document.getElementById('final-score').textContent = me.score;
+    document.getElementById('final-rank').textContent = `Rank #${me.rank} of ${leaderboard.length}`;
+    document.getElementById('stat-correct').textContent = me.answers.filter(a => a?.correct).length;
+    document.getElementById('stat-avg-time').textContent = me.avgTimeTaken < 1000 
+      ? Math.round(me.avgTimeTaken) + 'ms' 
+      : (me.avgTimeTaken/1000).toFixed(1) + 's';
+  }
+  showScreen('screen-finished');
+}
+
+// ─── UTILS ─────────────────────────────────────────────────────────────────
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => {
+    s.classList.remove('active');
+  });
+  document.getElementById(id).classList.add('active');
+}
+
+// Enter key support
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && document.getElementById('screen-register').classList.contains('active')) {
+    submitRegistration();
+  }
+});
+
+// ─── INIT ─────────────────────────────────────────────────────────────────
+connect();
+</script>
+</body>
+</html>
