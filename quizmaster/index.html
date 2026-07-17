@@ -947,8 +947,9 @@ function toast(msg) {
 
 // ─── QR CODE ──────────────────────────────────────────────────────────────
 function setupQR() {
-  const participantUrl = location.protocol + '//' + location.hostname + ':8080';
-  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(participantUrl + '/participant/')}&bgcolor=ffffff&color=000000&qzone=1`;
+ // const participantUrl = location.protocol + '//' + location.hostname + ':8080';
+ const participantUrl = 'https://eduailabs-quiz-production.up.railway.app/participant/'; 
+ const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(participantUrl + '/participant/')}&bgcolor=ffffff&color=000000&qzone=1`;
   document.getElementById('qr-img').src = qrUrl;
   document.getElementById('qr-url').textContent = participantUrl + '/participant/';
 }
