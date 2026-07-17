@@ -616,7 +616,7 @@
 
 <script>
 // ─── CONFIG ───────────────────────────────────────────────────────────────
-//const WS_URL = 'ws://' + (location.hostname || 'localhost') + ':8080';
+// const WS_URL = 'ws://' + (location.hostname || 'localhost') + ':8080';
 const WS_URL = (location.protocol === 'https:' ? 'wss://' : 'ws://') + location.hostname;
 const PARTICIPANT_URL = location.protocol + '//' + location.hostname + ':' + location.port + '/participant/';
 

@@ -523,7 +523,7 @@
 </footer>
 
 <script>
-//const WS_URL = 'ws://' + (location.hostname || 'localhost') + ':8080';
+// const WS_URL = 'ws://' + (location.hostname || 'localhost') + ':8080';
 const WS_URL = (location.protocol === 'https:' ? 'wss://' : 'ws://') + location.hostname;
 let ws = null;
 let currentPhase = 'LOBBY';
